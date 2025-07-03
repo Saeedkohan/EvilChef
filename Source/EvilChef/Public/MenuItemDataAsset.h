@@ -6,7 +6,7 @@
 #include "MasterDataAsset.h"
 #include "MenuItemDataAsset.generated.h"
 
-class UCompanionData;
+class UCompanionDataAsset;
 class UExtraDataAsset;
 
 UCLASS()
@@ -19,4 +19,7 @@ public:
 	// float Price;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Compatibility")
 	TArray<UExtraDataAsset*> CompatibleExtras;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Compatibility")
+	
+	TArray<UCompanionDataAsset*> CompatibleCompanion;
 };
