@@ -17,9 +17,12 @@ class EVILCHEF_API UMenuItemDataAsset : public UMasterDataAsset
 public:
 	// UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Item Details")
 	// float Price;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Compatibility")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Compatibility")
+	TArray<UCompanionDataAsset*> CompatibleCompanions;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Compatibility")
 	TArray<UExtraDataAsset*> CompatibleExtras;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Compatibility")
-	
-	TArray<UCompanionDataAsset*> CompatibleCompanion;
+
+
+
 };

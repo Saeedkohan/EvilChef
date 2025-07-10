@@ -6,22 +6,20 @@
 #include "Blueprint/UserWidget.h"
 #include "MainHudWidget.generated.h"
 
-/**
- * 
- */
-class  UVerticalBox;
 class UDialogueLineWidget;
+struct FFinalOrderDetail;
+
 UCLASS()
 class EVILCHEF_API UMainHudWidget : public UUserWidget
 {
 	GENERATED_BODY()
-public:
-	void AddDialogueLine(const FText& DialogueText);
-protected:
-	UPROPERTY(meta = (BindWidget))
-	UVerticalBox* DialogueContainer;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Dialogue")
-	TSubclassOf<UDialogueLineWidget> DialogueLineClass;
+public:
+
+	void DisplayOrder(const FFinalOrderDetail& OrderDetail);
 	
+protected:
+
+	UPROPERTY(meta = (BindWidget))
+	UDialogueLineWidget* DialogueLine;
 };

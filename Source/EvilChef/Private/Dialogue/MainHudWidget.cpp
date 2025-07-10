@@ -6,15 +6,11 @@
 #include "Components/VerticalBox.h"
 #include "Dialogue/DialogueLineWidget.h"
 
-void UMainHudWidget::AddDialogueLine(const FText& DialogueText)
+void UMainHudWidget::DisplayOrder(const FFinalOrderDetail& OrderDetail)
 {
-	if (DialogueLineClass && DialogueContainer)
+	if (DialogueLine)
 	{
-		UDialogueLineWidget* NewLineWidget = CreateWidget<UDialogueLineWidget>(this, DialogueLineClass);
-		if (NewLineWidget)
-		{
-			NewLineWidget->SetDialogueText(DialogueText);
-			DialogueContainer->AddChildToVerticalBox(NewLineWidget);
-		}
+		DialogueLine->UpdateWidget(OrderDetail);
+		DialogueLine->SetVisibility(ESlateVisibility::HitTestInvisible);
 	}
 }

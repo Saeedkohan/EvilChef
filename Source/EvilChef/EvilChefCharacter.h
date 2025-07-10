@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Dialogue/CustomerBPI.h"
+#include "Dialogue/FinalOrderDetail.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "EvilChefCharacter.generated.h"
@@ -19,7 +21,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
  *  A basic first person character
  */
 UCLASS(abstract)
-class AEvilChefCharacter : public ACharacter
+class AEvilChefCharacter : public ACharacter, public ICustomerBPI
 {
 	GENERATED_BODY()
 
@@ -34,6 +36,9 @@ class AEvilChefCharacter : public ACharacter
 protected:
 
 	/** Jump Input Action */
+	
+	
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category ="Input")
 	UInputAction* JumpAction;
 
@@ -89,6 +94,21 @@ public:
 
 	/** Returns first person camera component **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
+
+
+protected:
+	virtual void BeginPlay() override;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<class UMainHudWidget> MainHudClass;
+
+
+	UPROPERTY()
+	class UMainHudWidget* MainHudWidget;
+
+public:
+	virtual  void SendTheOrder_Implementation(const FFinalOrderDetail& OrderData) override;
+	
 
 };
 

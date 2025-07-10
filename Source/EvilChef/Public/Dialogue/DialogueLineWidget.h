@@ -13,13 +13,24 @@ class EVILCHEF_API UDialogueLineWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	void SetDialogueText(const FText& InText);
-	void SetItemNameText(const FText& InText);
+
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void UpdateWidget(const FFinalOrderDetail& OrderDetail);
 
 protected:
+	
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* DialogueText;
+	UTextBlock* IntroText;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* ItemName; 
+	UTextBlock* ItemNameText;
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* ExtrasText;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* CompanionsText;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* OutroText;
 };

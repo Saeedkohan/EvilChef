@@ -7,6 +7,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
+#include "Dialogue/MainHudWidget.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -121,4 +122,33 @@ void AEvilChefCharacter::DoJumpEnd()
 {
 	// pass StopJumping to the character
 	StopJumping();
+}
+
+
+void AEvilChefCharacter::BeginPlay()
+{
+	Super::BeginPlay(); 
+
+	
+	if (MainHudClass)
+	{
+	
+		MainHudWidget = CreateWidget<UMainHudWidget>(GetWorld(), MainHudClass);
+		
+		
+		if (MainHudWidget)
+		{
+			MainHudWidget->AddToViewport();
+		}
+	}
+}
+
+
+void AEvilChefCharacter::SendTheOrder_Implementation(const FFinalOrderDetail& OrderData)
+{
+	
+	if (MainHudWidget)
+	{
+		MainHudWidget->DisplayOrder(OrderData);
+	}
 }
