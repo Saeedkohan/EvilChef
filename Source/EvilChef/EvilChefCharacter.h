@@ -7,6 +7,7 @@
 #include "Dialogue/FinalOrderDetail.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "MasterInteract/InteractBPI.h"
 #include "EvilChefCharacter.generated.h"
 
 class UInputComponent;
@@ -21,7 +22,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
  *  A basic first person character
  */
 UCLASS(abstract)
-class AEvilChefCharacter : public ACharacter, public ICustomerBPI
+class AEvilChefCharacter : public ACharacter, public ICustomerBPI,public IInteractBPI
 {
 	GENERATED_BODY()
 
@@ -108,6 +109,11 @@ protected:
 
 public:
 	virtual  void SendTheOrder_Implementation(const FFinalOrderDetail& OrderData) override;
+
+	virtual void SendInteractReference_Implementation(AActor* InteractableActor) override;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
+	AActor* CurrentInteractable;
 	
 
 };

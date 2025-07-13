@@ -152,3 +152,8 @@ void AEvilChefCharacter::SendTheOrder_Implementation(const FFinalOrderDetail& Or
 		MainHudWidget->DisplayOrder(OrderData);
 	}
 }
+
+void AEvilChefCharacter::SendInteractReference_Implementation(AActor* InteractableActor)
+{
+	CurrentInteractable = InteractableActor;
+}
