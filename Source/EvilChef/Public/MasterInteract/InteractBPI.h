@@ -24,4 +24,8 @@ class EVILCHEF_API IInteractBPI
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void SendInteractReference(AActor * InteractableActor);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void Interact();
+
 };

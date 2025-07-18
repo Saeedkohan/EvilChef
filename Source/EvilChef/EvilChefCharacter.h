@@ -15,14 +15,15 @@ class USkeletalMeshComponent;
 class UCameraComponent;
 class UInputAction;
 struct FInputActionValue;
-
+class AMasterPickable;
+class AMasterInteract;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 /**
  *  A basic first person character
  */
 UCLASS(abstract)
-class AEvilChefCharacter : public ACharacter, public ICustomerBPI,public IInteractBPI
+class AEvilChefCharacter : public ACharacter, public ICustomerBPI, public IInteractBPI
 {
 	GENERATED_BODY()
 
@@ -35,11 +36,9 @@ class AEvilChefCharacter : public ACharacter, public ICustomerBPI,public IIntera
 	UCameraComponent* FirstPersonCameraComponent;
 
 protected:
-
 	/** Jump Input Action */
-	
-	
-	
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category ="Input")
 	UInputAction* JumpAction;
 
@@ -54,12 +53,13 @@ protected:
 	/** Mouse Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category ="Input")
 	class UInputAction* MouseLookAction;
-	
+
+
+
 public:
 	AEvilChefCharacter();
 
 protected:
-
 	/** Called from Input Actions for movement input */
 	void MoveInput(const FInputActionValue& Value);
 
@@ -83,19 +83,15 @@ protected:
 	virtual void DoJumpEnd();
 
 protected:
-
 	/** Set up input action bindings */
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
-	
 
 public:
-
 	/** Returns the first person mesh **/
 	USkeletalMeshComponent* GetFirstPersonMesh() const { return FirstPersonMesh; }
 
 	/** Returns first person camera component **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
-
 
 protected:
 	virtual void BeginPlay() override;
@@ -107,14 +103,51 @@ protected:
 	UPROPERTY()
 	class UMainHudWidget* MainHudWidget;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USceneComponent* AttachPoint;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+	AMasterPickable* HeldItem;
+
 public:
-	virtual  void SendTheOrder_Implementation(const FFinalOrderDetail& OrderData) override;
+	virtual void SendTheOrder_Implementation(const FFinalOrderDetail& OrderData) override;
 
 	virtual void SendInteractReference_Implementation(AActor* InteractableActor) override;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	AActor* CurrentInteractable;
+
+
+	void PickupItem(AMasterPickable* ItemToPickup);
+	void PlaceItem(const FVector& NewLocation);
+	void Tick(float DeltaTime);
+
+	AMasterPickable* GetHeldItem() const { return HeldItem; }
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UStaticMeshComponent* GhostMeshComponent;
+
+protected:
+	void OnInteract();
 	
+	 UPROPERTY(EditDefaultsOnly, Category="Interaction")
+        float InteractionDotThreshold = 0.8f; 
+	// virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+public:
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
+	AMasterInteract* FocusedInteractable;
+
+
+protected:
+
+	UPROPERTY(EditDefaultsOnly, Category = "Interaction|Placement")
+	UMaterialInterface* GhostMaterial_Green;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Interaction|Placement")
+	UMaterialInterface* GhostMaterial_Red;
+
+	UPROPERTY(EditDefaultsOnly, Category="Interaction")
+	float InteractionDistance = 300.0f;
 
 };
-

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "InteractBPI.h" 
 #include "Components/SceneComponent.h" 
 #include "MasterInteract.generated.h"
 
@@ -13,12 +14,14 @@ class UMasterDataAsset;
 class AEvilChefCharacter;
 
 UCLASS()
-class EVILCHEF_API AMasterInteract : public AActor
+class EVILCHEF_API AMasterInteract : public AActor ,public IInteractBPI
 {
 	GENERATED_BODY()
 	
 public:	
 	AMasterInteract();
+
+	void Interact_Implementation();
 
 protected:
 	virtual void BeginPlay() override;
@@ -32,7 +35,7 @@ protected:
 	UWidgetComponent* ItemNameWidget;
 	
 	
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Config")
+	UPROPERTY(EditAnywhere , BlueprintReadOnly, Category = "Config")
 	UMasterDataAsset* ItemData;
 
 	
@@ -53,10 +56,13 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	bool PlayerHasItem();
-	
+public:
 	UFUNCTION(BlueprintCallable)
 	void HideWidget();
 
 	UFUNCTION(BlueprintCallable)
 	void ShowWidget();
+
+
+	
 };

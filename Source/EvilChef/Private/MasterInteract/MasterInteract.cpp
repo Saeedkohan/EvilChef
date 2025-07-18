@@ -26,6 +26,11 @@ AMasterInteract::AMasterInteract()
 	ItemNameWidget->SetVisibility(false); 
 }
 
+void AMasterInteract::Interact_Implementation()
+{
+
+}
+
 void AMasterInteract::BeginPlay()
 {
 	Super::BeginPlay();
@@ -65,11 +70,17 @@ void AMasterInteract::Tick(float DeltaTime)
 
 	if (DotProduct > InteractionDotThreshold)
 	{
+		ItemNameWidget->SetVisibility(true);
 		
 		if (PlayerCharacterRef->GetClass()->ImplementsInterface(UInteractBPI::StaticClass()))
 		{
 			IInteractBPI::Execute_SendInteractReference(PlayerCharacterRef, this);
 		}
+		
+	}
+	else
+	{
+		ItemNameWidget->SetVisibility(false);
 	}
 }
 
@@ -77,7 +88,7 @@ void AMasterInteract::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, A
 {
 	if (OtherActor == PlayerCharacterRef)
 	{
-		ShowWidget();
+		// ItemNameWidget->SetVisibility(true); // 
 		SetActorTickEnabled(true); 
 	}
 }
@@ -104,5 +115,15 @@ bool AMasterInteract::PlayerHasItem()
 	return false; 
 }
 
-void AMasterInteract::HideWidget(){ ItemNameWidget->SetVisibility(false); }
-void AMasterInteract::ShowWidget(){ ItemNameWidget->SetVisibility(true); }
+
+
+
+void AMasterInteract::HideWidget()
+{
+	ItemNameWidget->SetVisibility(false);
+}
+
+void AMasterInteract::ShowWidget()
+{
+	ItemNameWidget->SetVisibility(true);
+}

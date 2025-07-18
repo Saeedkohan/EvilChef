@@ -20,4 +20,7 @@ public:
 	
 	// UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Details")
 	// UTexture2D* ItemIcon;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Details")
+	bool IsPickable=false;
+
 };
