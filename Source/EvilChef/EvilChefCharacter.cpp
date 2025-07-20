@@ -10,6 +10,7 @@
 #include "Dialogue/MainHudWidget.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "MasterInteract/MasterPickable.h"
+#include "DrawDebugHelpers.h"
 #include "MasterInteract//WorkTable.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -62,7 +63,10 @@ AEvilChefCharacter::AEvilChefCharacter()
 	GhostMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GhostMesh"));
 	GhostMeshComponent->SetupAttachment(RootComponent);
 	GhostMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision); 
-	GhostMeshComponent->SetVisibility(false); 
+	GhostMeshComponent->SetVisibility(false);
+
+
+	bIsPlacementModeActive = false;
 }
 
 void AEvilChefCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -177,40 +181,72 @@ void AEvilChefCharacter::SendInteractReference_Implementation(AActor* Interactab
 	CurrentInteractable = InteractableActor;
 }
 
+// EvilChefCharacter.cpp
+
 void AEvilChefCharacter::OnInteract()
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnInteract called. FocusedInteractable is: %s"), *GetNameSafe(FocusedInteractable));
-	if (FocusedInteractable)
+	// --- حالت اول: بازیکن آیتمی در دست ندارد ---
+	if (!HeldItem)
 	{
-		if (FocusedInteractable->GetClass()->ImplementsInterface(UInteractBPI::StaticClass()))
+		if (FocusedInteractable)
 		{
-			IInteractBPI::Execute_Interact(FocusedInteractable);
+			// چک کن آیا آیتم قابل برداشتن است یا نه
+			if (AMasterPickable* PickableItem = Cast<AMasterPickable>(FocusedInteractable))
+			{
+				PickupItem(PickableItem);
+			}
+			// در آینده می‌توانید تعامل با چیزهای دیگر (مثل دکمه) را اینجا اضافه کنید
+		}
+		return; // بعد از تلاش برای برداشتن، از تابع خارج شو
+	}
+
+	// --- حالت دوم: بازیکن آیتمی در دست دارد ---
+	if (HeldItem)
+	{
+		// اگر در حالت گذاشتن نیستیم، با فشار F وارد این حالت شو
+		if (!bIsPlacementModeActive)
+		{
+			bIsPlacementModeActive = true;
+			UE_LOG(LogTemp, Warning, TEXT("Placement Mode Activated."));
+			return;
+		}
+
+		// اگر در حالت گذاشتن هستیم، با فشار F آیتم را بگذار
+		if (bIsPlacementModeActive)
+		{
+			// چک کن که آیا Ghost Mesh قابل مشاهده و سبز رنگ است
+			if (GhostMeshComponent->IsVisible() && GhostMeshComponent->GetMaterial(0) == GhostMaterial_Green)
+			{
+				PlaceItem();
+			}
+			else
+			{
+				// اگر محل نامناسب بود، حالت گذاشتن را لغو کن
+				bIsPlacementModeActive = false;
+				GhostMeshComponent->SetVisibility(false);
+				UE_LOG(LogTemp, Warning, TEXT("Cannot place item here. Deactivating placement mode."));
+			}
 		}
 	}
 }
 
+// EvilChefCharacter.cpp
+
 void AEvilChefCharacter::PickupItem(AMasterPickable* ItemToPickup)
 {
-	// لاگ شماره ۳: چک می‌کند آیا تابع برداشتن آیتم صدا زده شده یا نه
-	UE_LOG(LogTemp, Warning, TEXT("PickupItem function called with item: %s"), *GetNameSafe(ItemToPickup));
+	if (HeldItem || !ItemToPickup) { return; }
 
-	if (HeldItem) { return; } // اگر آیتمی در دست داریم، فعلا آیتم جدیدی برنمی‌داریم
+	HeldItem = ItemToPickup;
+	HeldItem->ItemMesh->SetSimulatePhysics(false);
+	HeldItem->SetActorEnableCollision(false);
+	HeldItem->AttachToComponent(AttachPoint, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
-	if (ItemToPickup)
-	{
-		HeldItem = ItemToPickup;
-
-		// غیرفعال کردن فیزیک و برخورد
-		HeldItem->ItemMesh->SetSimulatePhysics(false);
-		HeldItem->SetActorEnableCollision(false);
-
-		// اتصال به نقطه مورد نظر
-		HeldItem->AttachToComponent(AttachPoint, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-		
-		UE_LOG(LogTemp, Warning, TEXT("Successfully attached %s!"), *ItemToPickup->GetName());
-	}
+	// ===== خط جدید =====
+	// وقتی آیتم جدیدی برمی‌داریم، حالت گذاشتن را ریست کن
+	bIsPlacementModeActive = false; 
+	
+	UE_LOG(LogTemp, Warning, TEXT("Successfully picked up %s!"), *ItemToPickup->GetName());
 }
-
 void AEvilChefCharacter::PlaceItem(const FVector& NewLocation)
 {
 	if (HeldItem)
@@ -230,89 +266,114 @@ void AEvilChefCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // لاگ شماره ۱: برای اطمینان از اینکه تابع Tick اصلاً اجرا می‌شود
-    UE_LOG(LogTemp, Warning, TEXT("Player Tick is Running..."));
-
-    // یک لیست از تمام آیتم‌هایی که در محدوده آنها هستیم، تهیه کن
+    // بخش ۱: پیدا کردن آیتمی که به آن نگاه می‌کنیم (این بخش درست است)
     TArray<AActor*> OverlappingActors;
     GetOverlappingActors(OverlappingActors, AMasterInteract::StaticClass());
 
-    // لاگ شماره ۲: برای دیدن تعداد آیتم‌های پیدا شده در محدوده
-    UE_LOG(LogTemp, Warning, TEXT("Found %d Overlapping Interactables."), OverlappingActors.Num());
-
     AMasterInteract* BestInteractable = nullptr;
-    float BestDot = -1.0f; 
+    float BestDot = -1.0f;
 
-    // در میان تمام آیتم‌های نزدیک، بهترین گزینه را پیدا کن
     for (AActor* OverlappedActor : OverlappingActors)
     {
-        AMasterInteract* Interactable = Cast<AMasterInteract>(OverlappedActor);
-        if (Interactable)
-        {
-            // محاسبه زاویه دید
-            FVector PlayerCameraLocation = GetFirstPersonCameraComponent()->GetComponentLocation();
-            FVector DirectionToActor = Interactable->GetActorLocation() - PlayerCameraLocation;
-            DirectionToActor.Normalize();
-            float DotProduct = FVector::DotProduct(GetFirstPersonCameraComponent()->GetForwardVector(), DirectionToActor);
+       AMasterInteract* Interactable = Cast<AMasterInteract>(OverlappedActor);
+       if (Interactable)
+       {
+          FVector PlayerCameraLocation = GetFirstPersonCameraComponent()->GetComponentLocation();
+          FVector DirectionToActor = Interactable->GetActorLocation() - PlayerCameraLocation;
+          DirectionToActor.Normalize();
+          float DotProduct = FVector::DotProduct(GetFirstPersonCameraComponent()->GetForwardVector(), DirectionToActor);
 
-            // لاگ شماره ۳: برای دیدن مقدار زاویه دید برای هر آیتم
-            UE_LOG(LogTemp, Warning, TEXT("Checking item: %s - Dot Product is: %f"), *Interactable->GetName(), DotProduct);
-
-            if (DotProduct > InteractionDotThreshold && DotProduct > BestDot)
-            {
-                BestDot = DotProduct;
-                BestInteractable = Interactable;
-            }
-        }
+          if (DotProduct > InteractionDotThreshold && DotProduct > BestDot)
+          {
+             BestDot = DotProduct;
+             BestInteractable = Interactable;
+          }
+       }
     }
 
-    // مدیریت نمایش ویجت‌ها
+    // مدیریت ویجت نام آیتم (این بخش درست است)
     if (FocusedInteractable != BestInteractable)
     {
-        if (FocusedInteractable)
-        {
-            FocusedInteractable->HideWidget();
-        }
-
-        if (BestInteractable)
-        {
-            BestInteractable->ShowWidget();
-        }
-
-        FocusedInteractable = BestInteractable;
+       if (FocusedInteractable)
+       {
+          FocusedInteractable->HideWidget();
+       }
+       
+       if (BestInteractable)
+       {
+          BestInteractable->ShowWidget();
+       }
+       
+       FocusedInteractable = BestInteractable;
     }
 
+    // بخش ۲: منطق Ghost Mesh (این بخش اصلاح شده و بدون تکرار است)
+    // این منطق فقط زمانی اجرا می‌شود که آیتمی در دست داریم و در حالت گذاشتن هستیم
+    if (HeldItem && bIsPlacementModeActive)
+    {
+       FVector TraceStart = GetFirstPersonCameraComponent()->GetComponentLocation();
+       FVector TraceEnd = TraceStart + (GetFirstPersonCameraComponent()->GetForwardVector() * InteractionDistance);
+       FHitResult HitResult;
 
+       float SphereRadius = 15.0f;
+       FCollisionShape Sphere = FCollisionShape::MakeSphere(SphereRadius);
+
+       bool bHasHit = GetWorld()->SweepSingleByChannel(HitResult, TraceStart, TraceEnd, FQuat::Identity, ECC_Visibility, Sphere);
+       
+       DrawDebugSphere(GetWorld(), bHasHit ? HitResult.ImpactPoint : TraceEnd, SphereRadius, 12, FColor::Green, false, -1.0f);
+
+       if (bHasHit)
+       {
+          AWorkTable* TargetTable = Cast<AWorkTable>(HitResult.GetActor());
+          GhostMeshComponent->SetStaticMesh(HeldItem->GetItemMesh()->GetStaticMesh());
+          GhostMeshComponent->SetMaterial(0, TargetTable ? GhostMaterial_Green : GhostMaterial_Red);
+          GhostMeshComponent->SetWorldLocation(HitResult.Location);
+          GhostMeshComponent->SetVisibility(true);
+       }
+       else
+       {
+          GhostMeshComponent->SetVisibility(false);
+       }
+    }
+    else
+    {
+       // در هر حالت دیگری، مطمئن می‌شویم که روح مخفی است
+       if (GhostMeshComponent->IsVisible())
+       {
+          GhostMeshComponent->SetVisibility(false);
+       }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+// EvilChefCharacter.cpp
+
+void AEvilChefCharacter::PlaceItem()
+{
+	if (!HeldItem) { return; }
+
+	UE_LOG(LogTemp, Warning, TEXT("Placing item: %s"), *HeldItem->GetName());
+
+	// آیتم را از بازیکن جدا کن
+	HeldItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	
-	if (HeldItem) 
-	{
-		FVector TraceStart = GetFirstPersonCameraComponent()->GetComponentLocation();
-		FVector TraceEnd = TraceStart + (GetFirstPersonCameraComponent()->GetForwardVector() * InteractionDistance);
-		FHitResult HitResult;
+	// آن را در محل Ghost Mesh قرار بده
+	HeldItem->SetActorLocation(GhostMeshComponent->GetComponentLocation());
 
-		// یک اشعه از دوربین شلیک کن
-		if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility))
-		{
-			// چک کن آیا به یک میز برخورد کرده‌ایم یا نه
-			AWorkTable* TargetTable = Cast<AWorkTable>(HitResult.GetActor());
+	// برخورد (Collision) را دوباره فعال کن
+	HeldItem->SetActorEnableCollision(true);
 
-			// مش و متریال مناسب را تنظیم کن
-			GhostMeshComponent->SetStaticMesh(HeldItem->GetItemMesh()->GetStaticMesh());
-			GhostMeshComponent->SetMaterial(0, TargetTable ? GhostMaterial_Green : GhostMaterial_Red);
-
-			// روح را در محل برخورد قرار بده و آن را قابل مشاهده کن
-			GhostMeshComponent->SetWorldLocation(HitResult.Location);
-			GhostMeshComponent->SetVisibility(true);
-		}
-		else
-		{
-			// اگر اشعه به جایی برخورد نکرد، روح را مخفی کن
-			GhostMeshComponent->SetVisibility(false);
-		}
-	}
-	else
-	{
-		// اگر آیتمی در دست نداریم، روح را مخفی کن
-		GhostMeshComponent->SetVisibility(false);
-	}
+	// ریست کردن متغیرها
+	HeldItem = nullptr;
+	bIsPlacementModeActive = false;
+	GhostMeshComponent->SetVisibility(false);
 }

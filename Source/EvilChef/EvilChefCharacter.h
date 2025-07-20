@@ -137,6 +137,7 @@ protected:
 public:
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	AMasterInteract* FocusedInteractable;
+	void PlaceItem();
 
 
 protected:
@@ -149,5 +150,5 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Interaction")
 	float InteractionDistance = 300.0f;
-
+	bool bIsPlacementModeActive;
 };
